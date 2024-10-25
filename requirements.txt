@@ -1,0 +1,11 @@
+langchain
+PyPDF2
+langchain_community
+sentence_transformers
+langchain_groq
+langchain_huggingface
+faiss-cpu
+pypdf
+youtube-transcript-api
+streamlit
+bs4

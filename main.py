@@ -5,8 +5,8 @@ from src import RAG
 if "Next step" not in st.session_state:
     st.session_state["Next step"] = False  
 
-if "Go" not in st.session_state:
-    st.session_state["Go"] = False  
+if "Submit" not in st.session_state:
+    st.session_state["Submit"] = False  
 
 st.title('Documents chat')
 st.write('You add to your chat a file PDF, a YouTube video (which will be transcribed) or a webpage link.')
@@ -37,16 +37,36 @@ if st.session_state["Next step"]:
         with open(file_path, "wb") as f:
             f.write(uploaded_file.getvalue())
         doc = file_path
-    st.text('Now write your prompt.')
-    prompt = st.text_input("Input your prompt here")
-    if st.button("Go"):
-        st.session_state["Go"] = True   
-    if st.session_state["Go"]:
-        rag = RAG(doc, source)
-        if source == 'PDF':
-        # After you're done with the file, you can delete it
-            os.remove(file_path)
-        print('RAG created!')
-        answer = rag.qa(prompt)
-        st.write(answer)
-        
+    
+    #  Prompt section
+    st.header('Chatbot based on your info')
+    prompt = st.text_input("Input your questions here")
+    if st.button("Submit"):
+        st.session_state["Submit"] = True   
+    if st.session_state["Submit"]:
+        if "user_prompt_history" not in st.session_state:
+            st.session_state["user_prompt_history"]=[]
+        if "chat_answers_history" not in st.session_state:
+            st.session_state["chat_answers_history"]=[]
+        if "chat_history" not in st.session_state:
+            st.session_state["chat_history"]=[]
+        if "rag" not in st.session_state:
+            st.session_state["rag"] = RAG(doc, source)
+        with st.spinner("Generating......"):
+            # Storing the questions, answers and chat history
+            if source == 'PDF':
+            # After you're done with the file, you can delete it
+                os.remove(file_path)
+            print('RAG created!')
+            answer = st.session_state["rag"].qa(prompt)
+
+            st.session_state["chat_answers_history"].append(answer)
+            st.session_state["user_prompt_history"].append(prompt)
+            st.session_state["chat_history"].append((prompt,answer))
+
+        if st.session_state["chat_answers_history"]:
+            for i, j in zip(st.session_state["chat_answers_history"],st.session_state["user_prompt_history"]):
+                message1 = st.chat_message("user")
+                message1.write(j)
+                message2 = st.chat_message("assistant")
+                message2.write(i)

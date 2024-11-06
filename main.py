@@ -1,31 +1,26 @@
 import streamlit as st
 import os
 from src import RAG
+import logging 
 
-if "Next step" not in st.session_state:
-    st.session_state["Next step"] = False  
+logging.basicConfig(level=logging.INFO) 
 
-if "Submit" not in st.session_state:
-    st.session_state["Submit"] = False  
+if "Add source" not in st.session_state:
+    st.session_state["Add source"] = False  
     
 
 st.title('Documents chat')
 st.write('You add to your chat a file PDF, a YouTube video (which will be transcribed) or a webpage link.')
 source = st.selectbox('Pick your source',["PDF", "PDF_on_web","YouTube","Web"])
 if source == "PDF":
-    uploaded_file  = st.file_uploader("Upload your PDF", type="pdf")
-
-        
+    uploaded_file  = st.file_uploader("Upload your PDF", type="pdf")    
 else:  
     doc = st.text_input("Paste your Link")
 
-if st.button("Next step"):
-    st.session_state["Next step"] = True   
+if st.button("Add source"): #try to set n_sources
+    st.session_state["Add source"] = True   
 
-if st.session_state["Next step"]:
-    if "doc" not in st.session_state and "source" not in st.session_state:
-        st.session_state["doc"]=[]
-        st.session_state["source"]=[]
+if st.session_state["Add source"]: 
     if source == "PDF" and uploaded_file is not None:
     # Define the directory where you want to save the file
         directory = "./temp-dir"
@@ -36,25 +31,25 @@ if st.session_state["Next step"]:
         
         # Define the full file path
         file_path = os.path.join(directory, uploaded_file.name)
-        
+        st.session_state["file_path"] = file_path
         # Write the file
         with open(file_path, "wb") as f:
             f.write(uploaded_file.getvalue())
         doc = file_path
-    st.session_state["doc"].append(doc)
-    st.session_state["source"].append(source)
     if "rag" not in st.session_state:
-        st.session_state["rag"] = RAG(doc, source)
+        st.session_state["rag"] = RAG(document=doc, source=source)
+        st.session_state["Add source"] = False  
+        st.session_state["source"] = source
     else:
         st.session_state["rag"].add_documents_to_embedding(doc,source)
+        st.session_state["Add source"] = False  
+        st.session_state["source"] = source
 
-    
+if "rag" in st.session_state:
     #  Prompt section
     st.header('Chatbot based on your info')
-    prompt = st.text_input("Input your questions here")
-    if st.button("Submit"):
-        st.session_state["Submit"] = True   
-    if st.session_state["Submit"]:
+    prompt = st.chat_input("Input your questions here")
+    if prompt:
         if "user_prompt_history" not in st.session_state:
             st.session_state["user_prompt_history"]=[]
         if "chat_answers_history" not in st.session_state:
@@ -64,12 +59,17 @@ if st.session_state["Next step"]:
 
         with st.spinner("Generating......"):
             # Storing the questions, answers and chat history
-            if source == 'PDF':
+            logging.info("The current source is")
+            logging.info(st.session_state["source"])
+            if st.session_state["source"] == 'PDF':
             # After you're done with the file, you can delete it
-                os.remove(file_path)
-            print('RAG created!')
+                os.remove(st.session_state["file_path"])
+                st.session_state["source"] = None
+                st.session_state["file_path"] = None
+                logging.info(st.session_state["source"])
+            logging.info('RAG created!')
             history = st.session_state["chat_history"]
-            answer = st.session_state["rag"].qa(prompt, chat_history=history)
+            answer =  st.session_state["rag"].invoke_answer(my_prompt=prompt, chat_history=history)
 
             st.session_state["chat_answers_history"].append(answer)
             st.session_state["user_prompt_history"].append(prompt)
@@ -81,3 +81,4 @@ if st.session_state["Next step"]:
                 message1.write(j)
                 message2 = st.chat_message("assistant")
                 message2.write(i)
+    

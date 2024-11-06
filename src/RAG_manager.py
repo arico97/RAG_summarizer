@@ -23,7 +23,8 @@ to_load = {
     'PDF': get_pdf,
     "PDF_on_web":get_pdf,
     'YouTube': get_youtube,
-    'Web': get_web_content
+    'Web': get_web_content,
+    'default': 'default'
 }
 
 load_dotenv()
@@ -54,7 +55,10 @@ class RAG:
     
     def get_initial_docs(self, document, source):
         loader = to_load[source]
-        docs = loader(document)
+        if loader == 'default':
+            docs = ""
+        else:
+            docs = loader(document)
         return docs
 
     def get_embeddings(self, document, source):
@@ -71,9 +75,15 @@ class RAG:
         uuids = [str(uuid4()) for _ in range(len(docs))]
         self.embedding_db.add_documents(documents=docs, ids=uuids)
 
-    def qa(self, my_prompt, chat_history):
+    def invoke_answer(self, my_prompt, chat_history):
         chat_history_proc =[(HumanMessage(i),j) for i,j in chat_history]
         history = [*sum(chat_history_proc, ())]
         logging.info(history)
-        response = self.retrieval_chain.invoke({"input":my_prompt,"chat_history":history})
+        response = self.retrieval_chain.invoke(
+            {
+                "input":my_prompt,
+                "chat_history":history
+            }
+        )
         return response['answer']
+    

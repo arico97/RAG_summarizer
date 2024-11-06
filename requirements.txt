@@ -9,3 +9,4 @@ pypdf
 youtube-transcript-api
 streamlit
 bs4
+fastapi

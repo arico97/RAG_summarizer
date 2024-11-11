@@ -1,19 +1,26 @@
 import streamlit as st
 import os
-from src import RAG
-import logging 
 
-logging.basicConfig(level=logging.INFO) 
+import requests
+
+from src import ChatTextGenerator
+
+API_URL = "http://127.0.0.1:8000/"
+
+sources = ["pdf", "epub", "PDF from web","YouTube","Web"]
+
+# Define the directory where you want to save the file
+temp_dir = "./temp-dir"
 
 if "Add source" not in st.session_state:
     st.session_state["Add source"] = False  
     
 
 st.title('Documents chat')
-st.write('You add to your chat a file PDF, a YouTube video (which will be transcribed) or a webpage link.')
-source = st.selectbox('Pick your source',["PDF", "PDF_on_web","YouTube","Web"])
-if source == "PDF":
-    uploaded_file  = st.file_uploader("Upload your PDF", type="pdf")    
+st.write('You can add to your chat a file PDF, an epub file, a YouTube video (which will be transcribed) or a webpage link.')
+source = st.selectbox('Pick your source', sources)
+if source in {"pdf","epub"}:
+    uploaded_file  = st.file_uploader("Upload your file", type=source)    
 else:  
     doc = st.text_input("Paste your Link")
 
@@ -21,27 +28,33 @@ if st.button("Add source"): #try to set n_sources
     st.session_state["Add source"] = True   
 
 if st.session_state["Add source"]: 
-    if source == "PDF" and uploaded_file is not None:
-    # Define the directory where you want to save the file
-        directory = "./temp-dir"
+    if source in {"pdf","epub"} and uploaded_file is not None:
         
         # Create the directory if it doesn't exist
-        if not os.path.exists(directory):
-            os.makedirs(directory)
+        if not os.path.exists(temp_dir):
+            os.makedirs(temp_dir)
         
         # Define the full file path
-        file_path = os.path.join(directory, uploaded_file.name)
+        file_path = os.path.join(temp_dir, uploaded_file.name)
         st.session_state["file_path"] = file_path
         # Write the file
         with open(file_path, "wb") as f:
             f.write(uploaded_file.getvalue())
         doc = file_path
+
     if "rag" not in st.session_state:
-        st.session_state["rag"] = RAG(document=doc, source=source)
+        endpoint = 'initialize-rag/'
+        st.session_state["rag"] = True
+        url = API_URL+endpoint
+        payload = {"source_type":source, "documents":doc}
+        requests.post(url=url, json = payload)
         st.session_state["Add source"] = False  
         st.session_state["source"] = source
     else:
-        st.session_state["rag"].add_documents_to_embedding(doc,source)
+        endpoint = 'add-documents/'
+        url = API_URL + endpoint
+        payload = {"source_type": source, "documents": doc}
+        requests.post(url=url, json = payload)
         st.session_state["Add source"] = False  
         st.session_state["source"] = source
 
@@ -55,25 +68,23 @@ if "rag" in st.session_state:
         if "chat_answers_history" not in st.session_state:
             st.session_state["chat_answers_history"]=[]
         if "chat_history" not in st.session_state:
-            st.session_state["chat_history"]=[]
+            st.session_state["chat_history"]=[{"prompt":"","answer":""}]
 
         with st.spinner("Generating......"):
             # Storing the questions, answers and chat history
-            logging.info("The current source is")
-            logging.info(st.session_state["source"])
-            if st.session_state["source"] == 'PDF':
+            if st.session_state["source"] in {"pdf","epub"}:
             # After you're done with the file, you can delete it
                 os.remove(st.session_state["file_path"])
                 st.session_state["source"] = None
                 st.session_state["file_path"] = None
-                logging.info(st.session_state["source"])
-            logging.info('RAG created!')
             history = st.session_state["chat_history"]
-            answer =  st.session_state["rag"].invoke_answer(my_prompt=prompt, chat_history=history)
-
-            st.session_state["chat_answers_history"].append(answer)
+            endpoint = 'answer/'
+            url = API_URL + endpoint
+            payload = {"query": prompt, "chat_history": history}
+            answer = requests.post(url=url, json = payload).json()
+            st.session_state["chat_answers_history"].append(answer["answer"])
             st.session_state["user_prompt_history"].append(prompt)
-            st.session_state["chat_history"].append((prompt,answer))
+            st.session_state["chat_history"].append({"prompt":prompt,"answer":answer["answer"]})
 
         if st.session_state["chat_answers_history"]:
             for i, j in zip(st.session_state["chat_answers_history"],st.session_state["user_prompt_history"]):
@@ -81,4 +92,15 @@ if "rag" in st.session_state:
                 message1.write(j)
                 message2 = st.chat_message("assistant")
                 message2.write(i)
-    
+
+    st.header('Download conversation')
+    if st.button("Generate and download chat"):
+        generator = ChatTextGenerator()
+        text_data = generator.generate_chat_text(st.session_state["chat_history"])
+        st.write('You can download in .txt the chat conversation that you have already had.')
+        # Descarga del PDF
+        st.download_button(
+            label="Download conversation in txt",
+            data=text_data,
+            file_name="chat_conversation.txt"
+        )

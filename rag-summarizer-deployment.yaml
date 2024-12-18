@@ -1,0 +1,41 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: rag-summarizer-deployment
+  labels:
+    app: rag-summarizer
+spec:
+  replicas: 3 # Número de réplicas para alta disponibilidad
+  selector:
+    matchLabels:
+      app: rag-summarizer
+  template:
+    metadata:
+      labels:
+        app: rag-summarizer
+    spec:
+      containers:
+      - name: rag_summarizer
+        image: rag_summarizer:latest
+        ports:
+        - containerPort: 8000
+        resources:
+          limits:
+            cpu: "500m"
+            memory: "512Mi"
+          requests:
+            cpu: "250m"
+            memory: "256Mi"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: rag-summarizer-service
+spec:
+  selector:
+    app: rag-summarizer
+  ports:
+  - protocol: TCP
+    port: 80  # Puerto expuesto fuera del clúster
+    targetPort: 8000 # Puerto interno del contenedor
+  type: LoadBalancer # Exposición externa para pruebas

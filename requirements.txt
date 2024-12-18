@@ -10,3 +10,8 @@ youtube-transcript-api
 streamlit
 bs4
 fastapi
+uvicorn[standard]
+unstructured==0.16.5
+pypandoc
+pandoc
+fpdf

@@ -1,0 +1,1 @@
+uvicorn --reload src.app:api_router

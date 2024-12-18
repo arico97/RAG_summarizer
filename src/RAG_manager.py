@@ -35,7 +35,8 @@ load_dotenv()
 
 llm = ChatGroq(
     api_key=os.getenv('GROQ_KEY'),
-    model_name='llama3-8b-8192'
+    model_name='llama-3.2-90b-vision-preview'
+   # model_name='llama3-8b-8192'
     )
 
 prompt_qa = """
@@ -86,6 +87,7 @@ class RAG:
             docs = ""
         else:
             docs = loader(document)
+            logging.info(f"The length of docs is: {len(docs)}")
         return docs
 
     def get_embeddings(self, document: str, source: str) -> FAISS:

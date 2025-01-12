@@ -18,33 +18,34 @@ The **RAG Summarizer** is a Retrieval-Augmented Generation (RAG) model designed 
    git clone https://github.com/arico97/RAG_summarizer.git
    cd RAG_summarizer
    ```
-2. Set Up a Virtual Environment (optional but recommended):
+2. **Set Up a Virtual Environment (optional but recommended)**:
+   
    ```bash
-python -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
+   python -m venv venv
+   source venv/bin/activate  # On Windows: venv\Scripts\activate
    ```
 
-Install Dependencies:
+3. Install Dependencies:
 
    ```bash
-pip install -r requirements.txt
+   pip install -r requirements.txt
    ```
 Usage
 Run the Streamlit Application:
 
    ```bash
-streamlit run streamlit_app.py
+   streamlit run streamlit_app.py
    ```
 Access the Application:
 
 Open your web browser and navigate to http://localhost:8501 to interact with the RAG Summarizer.
 
 ## Project Structure
-src/: Contains the core modules for document retrieval and summarization.
-streamlit_app.py: Hosts the Streamlit web application interface.
-requirements.txt: Lists all necessary Python dependencies.
-Dockerfile: Defines the Docker image setup for containerized deployment.
-rag-summarizer-deployment.yaml: Kubernetes deployment configuration for the application.
+``src/``: Contains the core modules for document retrieval and summarization.
+``streamlit_app.py``: Hosts the Streamlit web application interface.
+``requirements.txt``: Lists all necessary Python dependencies.
+``Dockerfile``: Defines the Docker image setup for containerized deployment.
+``rag-summarizer-deployment.yaml``: Kubernetes deployment configuration for the application.
 
 ## Deployment
 Docker

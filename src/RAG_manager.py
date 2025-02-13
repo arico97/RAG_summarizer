@@ -1,13 +1,8 @@
-from .file_loader import *
+'''RAG class to manage document retrieval and generation.'''
 
-from langchain_groq import ChatGroq
+from .constants import *
 
-from dotenv import load_dotenv
-import os 
-
-from langchain_huggingface.embeddings import HuggingFaceEmbeddings
 from langchain_community.vectorstores import FAISS
-from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 
 from langchain_core.messages import HumanMessage
 
@@ -23,50 +18,23 @@ from typing import List, Tuple
 
 logging.basicConfig(level=logging.INFO) 
 
-to_load = {
-    'pdf': get_pdf_content,
-    "PDF from web":get_pdf_content,
-    'YouTube': get_youtube_content,
-    'Web': get_web_content,
-    'epub':get_epub_content
-}
 
-load_dotenv()
-
-llm = ChatGroq(
-    api_key=os.getenv('GROQ_KEY'),
-    model_name='llama-3.2-90b-vision-preview'
-   # model_name='llama3-8b-8192'
-    )
-
-prompt_qa = """
-Answer the following question based only on the provided context. 
-Think step by step before providing a detailed answer. 
-I will tip you $200 if the user finds the answer helpful. 
-{context}"""
-
-prompt_init = ChatPromptTemplate.from_messages(    
-    [
-        ("system", prompt_qa),
-        MessagesPlaceholder("chat_history"),
-        ("human", "{input}"),
-    ])
 
 class RAG:
     """Manage document retrieval and generation using embeddings, retrievers, and document chains.
    
      Attributes:
-        embedding_db: The embedding database created from the initial document embeddings.
-        retriever: A retriever instance created from the embedding database.
-        document_chain: A document chain used for generating responses.
-        retrieval_chain: A chain that combines retrieval with document generation.
+        embedding_db: Embedding database created from the initial document embeddings.
+        retriever: Retriever instance created from the embedding database.
+        document_chain: Document chain used for generating responses.
+        retrieval_chain: Chain that combines retrieval with document generation.
     """
 
     def __init__(self, document: str, source: str) -> None:
         """Initialize RAG class by setting up embeddings, retrievers, and document/retrieval chains.
         Args:
-            document (str): The initial document used to create embeddings.
-            source (str): The source identifier for loading documents.
+            document (str): Initial document used to create embeddings.
+            source (str): Source identifier for loading documents.
         """
         self.embedding_db = self.get_embeddings(document, source)
         self.retriever = self.embedding_db.as_retriever()
@@ -77,10 +45,10 @@ class RAG:
     def get_initial_docs(self, document: str, source: str) -> List:
         """Load initial documents based on the specified source.
         Args:
-            document (str): The document text to load.
-            source (str): The source identifier that determines how the document is loaded.
+            document (str): Document text to load.
+            source (str): Source identifier that determines how document is loaded.
         Returns:
-            List[str]: A list of document chunks or an empty string if the default loader is used.
+            List[str]: List of doc chunks or empty string if default loader is used.
         """
         loader = to_load[source]
         if loader == 'default':
@@ -93,23 +61,22 @@ class RAG:
     def get_embeddings(self, document: str, source: str) -> FAISS:
         """Create vector embeddings for the given document.
         Args:
-            document (str): The document text to embed.
-            source (str): The source identifier for loading the document.
+            document (str): Document text to embed.
+            source (str): Source identifier for loading the document.
         Returns:
-            FAISS: A FAISS vector store containing the document embeddings.
+            FAISS: FAISS vector store containing the document embeddings.
         """
         chunks = self.get_initial_docs(document, source)
-        embeddings = HuggingFaceEmbeddings(
-            model_name="sentence-transformers/all-MiniLM-L6-v2"
-            )
-        vector_embeddings = FAISS.from_documents(documents=chunks,embedding= embeddings)
+        embeddings = embedding_model
+        vector_embeddings = FAISS.from_documents(documents=chunks,
+                                                 embedding= embeddings)
         return vector_embeddings
 
     def add_documents_to_embedding(self, document: str, source: str) -> None:
         """Add new documents to the existing embedding database.
         Args:
-            document (str): The document text to embed and add.
-            source (str): The source identifier for loading the document.
+            document (str): Document text to embed and add.
+            source (str): Source identifier for loading the document.
         """
         loader = to_load[source]
         docs = loader(document)
@@ -117,12 +84,12 @@ class RAG:
         self.embedding_db.add_documents(documents=docs, ids=uuids)
 
     def invoke_answer(self, my_prompt: str, chat_history: List[Tuple[str,str]]) -> str:
-        """Generate an answer based on the prompt and chat history.
+        """Generate an answer based on prompt and chat history.
         Args:
-            my_prompt (str): The input prompt from the user.
-            chat_history (Tuple[str, str]): A tuple of chat history with each entry containing user and bot messages.
+            my_prompt (str): User input prompt.
+            chat_history (Tuple[str, str]): Tuple of chat history with each entry containing user and bot messages.
         Returns:
-            str: The generated answer from the retrieval chain.
+            str: Generated answer from the retrieval chain.
         """
         chat_history_proc =[(HumanMessage(i),j) for i,j in chat_history]
         history = [*sum(chat_history_proc, ())]

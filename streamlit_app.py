@@ -1,3 +1,5 @@
+'''Frontend of the chatbot without backend integration'''
+
 import streamlit as st
 import os
 from src import RAG
@@ -5,15 +7,18 @@ import logging
 
 logging.basicConfig(level=logging.INFO) 
 
+directory = "./temp-dir"
+
 if "Add source" not in st.session_state:
     st.session_state["Add source"] = False  
     
 
 st.title('Documents chat')
 st.write('You add to your chat a file PDF, a YouTube video (which will be transcribed) or a webpage link.')
-source = st.selectbox('Pick your source',["PDF", "PDF_on_web","YouTube","Web"])
-if source == "PDF":
+source = st.selectbox('Pick your source',["pdf", "PDF_on_web","YouTube","Web"])
+if source in {"pdf","epub"}:
     uploaded_file  = st.file_uploader("Upload your PDF", type="pdf")    
+    logging.info("Uploaded file")
 else:  
     doc = st.text_input("Paste your Link")
 
@@ -21,9 +26,8 @@ if st.button("Add source"): #try to set n_sources
     st.session_state["Add source"] = True   
 
 if st.session_state["Add source"]: 
-    if source == "PDF" and uploaded_file is not None:
+    if source in {"pdf","epub"} and uploaded_file is not None:
     # Define the directory where you want to save the file
-        directory = "./temp-dir"
         
         # Create the directory if it doesn't exist
         if not os.path.exists(directory):
@@ -36,14 +40,16 @@ if st.session_state["Add source"]:
         with open(file_path, "wb") as f:
             f.write(uploaded_file.getvalue())
         doc = file_path
-    if "rag" not in st.session_state:
-        st.session_state["rag"] = RAG(document=doc, source=source)
-        st.session_state["Add source"] = False  
-        st.session_state["source"] = source
-    else:
-        st.session_state["rag"].add_documents_to_embedding(doc,source)
-        st.session_state["Add source"] = False  
-        st.session_state["source"] = source
+        logging.info(doc in globals())
+    if doc in globals():
+        if "rag" not in st.session_state: # falta que haya un doc en session state
+            st.session_state["rag"] = RAG(document=doc, source=source)
+            st.session_state["Add source"] = False  
+            st.session_state["source"] = source
+        else:
+            st.session_state["rag"].add_documents_to_embedding(doc,source)
+            st.session_state["Add source"] = False  
+            st.session_state["source"] = source
 
 if "rag" in st.session_state:
     #  Prompt section
@@ -59,15 +65,15 @@ if "rag" in st.session_state:
 
         with st.spinner("Generating......"):
             # Storing the questions, answers and chat history
-            logging.info("The current source is")
-            logging.info(st.session_state["source"])
-            if st.session_state["source"] == 'PDF':
+    #        logging.info("The current source is")
+    #        logging.info(st.session_state["source"])
+            if st.session_state["source"] == 'pdf':
             # After you're done with the file, you can delete it
                 os.remove(st.session_state["file_path"])
                 st.session_state["source"] = None
                 st.session_state["file_path"] = None
-                logging.info(st.session_state["source"])
-            logging.info('RAG created!')
+     #           logging.info(st.session_state["source"])
+      #      logging.info('RAG created!')
             history = st.session_state["chat_history"]
             answer =  st.session_state["rag"].invoke_answer(my_prompt=prompt, chat_history=history)
 

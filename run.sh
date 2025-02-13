@@ -1,1 +1,1 @@
-uvicorn --reload src.app:api_router
+streamlit run main.py & uvicorn --reload src.app:api_router

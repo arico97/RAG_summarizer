@@ -1,3 +1,5 @@
+'''Frontend of the chatbot application with backend integration'''
+
 import streamlit as st
 import os
 

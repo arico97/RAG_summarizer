@@ -4,6 +4,9 @@ from langchain.text_splitter import RecursiveCharacterTextSplitter
 
 from typing import List
 
+chunk_size = 256
+chunk_overlap = 50
+
 def get_pdf_content(file_path: str) -> List:  
     """Load and split a PDF document into pages.
     Args:
@@ -13,7 +16,9 @@ def get_pdf_content(file_path: str) -> List:
         List: A list of page contents extracted from the PDF.
     """  
     loader = PyPDFLoader(file_path)
-    text_splitter=RecursiveCharacterTextSplitter(chunk_size=1000,chunk_overlap=200)
+    text_splitter=RecursiveCharacterTextSplitter(
+        chunk_size=chunk_size,
+        chunk_overlap=chunk_overlap)
     pages = loader.load()
     documents=text_splitter.split_documents(pages)
     return documents
@@ -32,12 +37,13 @@ def get_youtube_content(url: str) -> List:
         url,
         transcript_format=TranscriptFormat.CHUNKS,
         add_video_info=False,
-      #  translation = "en",
         chunk_size_seconds=10)
-    text_splitter=RecursiveCharacterTextSplitter(chunk_size=1000,chunk_overlap=200)
+    text_splitter=RecursiveCharacterTextSplitter(
+        chunk_size=chunk_size,
+        chunk_overlap=chunk_overlap)
     pages = loader.load()
     documents=text_splitter.split_documents(pages)
-    return documents #falta hacer el split
+    return documents
 
 
 def get_web_content(link: str) -> List:
@@ -50,7 +56,9 @@ def get_web_content(link: str) -> List:
         List: A list of document chunks extracted from the web page.
     """
     loader= WebBaseLoader(link)
-    text_splitter=RecursiveCharacterTextSplitter(chunk_size=1000,chunk_overlap=200)
+    text_splitter=RecursiveCharacterTextSplitter(
+        chunk_size=chunk_size,
+        chunk_overlap=chunk_overlap)
     pages = loader.load()
     documents=text_splitter.split_documents(pages)
     return documents
@@ -64,7 +72,9 @@ def get_epub_content(file_path: str) -> List:
         List: A list of page contents extracted from the epub.
     """ 
     loader = UnstructuredEPubLoader(file_path)
-    text_splitter=RecursiveCharacterTextSplitter(chunk_size=1000,chunk_overlap=200)
+    text_splitter=RecursiveCharacterTextSplitter(
+        chunk_size=chunk_size,
+        chunk_overlap=chunk_overlap)
     pages = loader.load()
     documents=text_splitter.split_documents(pages)
     return documents

@@ -11,6 +11,7 @@ from .file_loader import *
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 
 
+# RAG constants
 
 to_load = {
     'pdf': get_pdf_content,
@@ -44,3 +45,12 @@ prompt_init = ChatPromptTemplate.from_messages(
 embedding_model = HuggingFaceEmbeddings(
             model_name="sentence-transformers/all-mpnet-base-v2"
             )
+
+
+# Frontend constants
+
+API_URL = "http://127.0.0.1:8000/"
+
+sources = ["pdf", "epub", "PDF from web","YouTube","Web"]
+
+temp_dir = "./temp-dir"

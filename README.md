@@ -1,28 +1,3 @@
-Install requirements: 
-
-``pip install --no-cache-dir -r requirements.txt``
-
-Run backend:
-
-``uvicorn src.app:api_router --reload`` 
-
-or 
-
-``.\run.sh``
-
-Run frontend:
-
-``streamlit run main.py`` 
-
-Build docker frontend image:
-
-Run docker frontend image:
-
-Build docker backend image:
-
-Run docker backend image:
-
-Docker compose:
 # RAG Summarizer
 
 ## Project Overview
@@ -56,10 +31,9 @@ The **RAG Summarizer** is a Retrieval-Augmented Generation (RAG) model designed 
    pip install -r requirements.txt
    ```
 ## Usage
-1. Run the Streamlit Application:
-
+1. Run the Application:
    ```bash
-   streamlit run streamlit_app.py
+   .\run.sh
    ```
 2. Access the Application:
 
@@ -97,7 +71,21 @@ Ensure the service is accessible by configuring the appropriate Kubernetes servi
 Execute the test suite to verify the functionality of the summarizer:
 
    ```bash
-python test.py
+   python test.py -o [option]
+   ```
+
+The `-o` argument specifies the type of test to run. The available options are:
+- **youtube**: Tests summarization of YouTube video transcripts. ```[option]=4```
+- **pdf**: Tests summarization of local PDF documents. ```[option]=2```
+- **pdf on web**: Tests summarization of PDF documents in a url. ```[option]=1```
+- **web**: Tests summarization of web page content. ```[option]=3```
+- **epub**: Tests summarization of epub documents. ```[option]=5```
+
+It's important to set in the ```doc``` variable either the document path or the url of the webpage, document or YouTube video.
+Example usage:
+
+   ```bash
+   python test.py -o 1
    ```
 
 ## Contributing

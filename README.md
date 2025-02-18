@@ -25,10 +25,18 @@ The **RAG Summarizer** is a Retrieval-Augmented Generation (RAG) model designed 
    source venv/bin/activate  # On Windows: venv\Scripts\activate
    ```
 
-3. Install Dependencies:
+3. **Install Dependencies**:
 
    ```bash
    pip install -r requirements.txt
+   ```
+
+4. **Configure LLM Credentials**:
+
+   Create a `.env` file in the project root directory and add your Large Language Model (LLM) credentials:
+
+   ```plaintext
+   LLM_API_KEY=your_api_key_here
    ```
 ## Usage
 1. Run the Application:
